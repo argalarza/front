@@ -1,0 +1,152 @@
+/* Estilos generales para la interfaz moderna */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #0D1B2A; /* Azul oscuro */
+  color: #EAEAEA; /* Texto blanco suave */
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+
+/* Barra de navegación con colores oscuros y morados */
+.navbar {
+  display: flex;
+  justify-content: center;
+  background-color: #2E3A59; /* Azul oscuro con un toque de morado */
+  padding: 20px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+}
+
+.nav-link {
+  color: #EAEAEA; /* Texto blanco suave */
+  text-decoration: none;
+  margin: 0 25px;
+  font-size: 18px;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #200168; /* Rosado brillante al pasar el cursor */
+  transform: scale(1.05); /* Efecto de aumento al pasar el cursor */
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #200168; /* Rosado brillante */
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Estilos del formulario de registro */
+.register-container {
+  background-color: #1C2A3A; /* Fondo oscuro con un toque más suave */
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+  width: 360px;
+  margin: 60px auto;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.register-container:hover {
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.9); /* Sombra más intensa al pasar el mouse */
+}
+
+h2 {
+  color: #6A4C9C; /* Morado para el título */
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #ddd;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #333;
+  color: #EAEAEA;
+  font-size: 16px;
+  transition: border 0.3s ease, background-color 0.3s ease;
+}
+
+input:focus {
+  border-color: #200168; /* Rosado brillante al enfocarse */
+  background-color: #444;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 8px;
+  background-color: #6A4C9C; /* Morado para el botón */
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #5D3F7D; /* Morado oscuro al hacer hover */
+}
+
+/* Mensajes de error y éxito */
+.error {
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+.success {
+  color: #2ecc71;
+  margin-bottom: 20px;
+}
+
+/* Pie de página */
+footer {
+  margin-top: 50px;
+  text-align: center;
+  font-size: 14px;
+  color: #bbb;
+}
+
+footer a {
+  color:#200168; /* Rosado en los enlaces */
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}

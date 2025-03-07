@@ -1,0 +1,18 @@
+
+services:
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - my_global_network  # Conectamos a la red externa
+    restart: unless-stopped
+
+networks:
+  my_global_network:
+    external: true  # Usamos la red creada manualmente
+

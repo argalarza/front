@@ -1,0 +1,89 @@
+name: Deploy Frontend to EC2
+
+on:
+  push:
+    branches:
+      - main  # Cambiar si la rama principal es diferente
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚀 Checkout del código
+      uses: actions/checkout@v3
+
+    - name: 🔑 Acceder a EC2 y desplegar
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        script: |
+          echo "🚀 Iniciando despliegue del Frontend en EC2..."
+
+          # Actualizar paquetes
+          echo "🔧 Instalando dependencias necesarias..."
+          sudo yum update -y
+
+          # Instalar git si no está instalado
+          if ! command -v git &> /dev/null; then
+            sudo yum install -y git
+          fi
+
+          # Instalar Docker si no está instalado
+          if ! command -v docker &> /dev/null; then
+            sudo yum install -y docker
+            sudo systemctl enable docker
+          fi
+
+          # Iniciar Docker si no está corriendo
+          if ! systemctl is-active --quiet docker; then
+            sudo service docker start
+          fi
+
+          # Instalar Docker Compose si no está instalado
+          if ! command -v docker-compose &> /dev/null; then
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
+          # Crear la red de Docker si no existe
+          if ! sudo docker network ls | grep -q "my_global_network"; then
+            sudo docker network create my_global_network
+          fi
+
+          # Crear directorio de la app si no existe
+          APP_DIR="/home/${{ secrets.EC2_USERNAME }}/ms-front"
+          mkdir -p $APP_DIR
+          cd $APP_DIR
+
+          # Clonar o actualizar el código fuente
+          echo "📦 Clonando o actualizando código fuente..."
+          if [ -d "ms-front" ]; then
+            cd ms-front
+            git reset --hard
+            git pull origin main
+          else
+            git clone -b main https://github.com/argalarza/front.git ms-front
+            cd ms-front
+          fi
+
+          # Detener contenedores existentes de forma segura
+          echo "🛑 Deteniendo contenedores antiguos..."
+          if sudo docker ps | grep -q ms-front; then
+            sudo docker-compose -f docker-compose.yml down --remove-orphans
+          fi
+
+          # Construir y levantar los contenedores
+          echo "🛠️ Construyendo y levantando los contenedores..."
+          sudo docker-compose -f docker-compose.yml up --build -d
+
+          # Verificar que el contenedor está corriendo
+          echo "🔍 Verificando que el servicio está corriendo..."
+          if ! sudo docker ps | grep -q ms-front; then
+            echo "⚠️ ERROR: El contenedor no se inició correctamente."
+            exit 1
+          fi
+
+          echo "✅ Despliegue del Frontend completado exitosamente."

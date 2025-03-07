@@ -88,7 +88,7 @@ const Products = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://54.80.25.52:3010/products");
+      const response = await axios.get("http://53.83.38.238:3010/products");
       setProducts(response.data);
     } catch (error) {
       console.error("Error al obtener productos:", error);
@@ -129,11 +129,11 @@ const Products = () => {
 
     try {
       if (isEditing) {
-        await axios.put(`http://34.238.244.221:3008/products/${selectedProduct.id}`, product);
+        await axios.put(`http://44.203.183.252:3008/products/${selectedProduct.id}`, product);
         setSuccessMessage("Producto actualizado exitosamente.");
         setIsEditing(false);
       } else {
-        await axios.post("http://54.146.165.86:3006/products", product);
+        await axios.post("http://44.202.237.191:3006/products", product);
         setSuccessMessage("Producto creado exitosamente.");
       }
 
@@ -163,7 +163,7 @@ const Products = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://3.95.223.149:3007/products/${id}`);
+      await axios.delete(`http://52.55.93.175:3007/products/${id}`);
       setSuccessMessage("Producto eliminado exitosamente.");
       fetchProducts();
     } catch (error) {

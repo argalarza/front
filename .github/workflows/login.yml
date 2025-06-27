@@ -3,7 +3,7 @@ name: 🚀 Build & Deploy Frontend to EC2
 on:
   push:
     branches:
-      - main  # 🛠️ Cambia a 'qa' si es entorno de pruebas2
+      - main  # 🛠️ Cambia a 'qa' si es entorno de pruebas.85
 
 jobs:
   build-and-deploy:
@@ -34,7 +34,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}          # 🌍 IP pública EC2
-          username: ubuntu                       # 👤 Usuario por defecto en AMI Ubuntu
+          username: ec2-user                      # 👤 Usuario por defecto en AMI Ubuntu
           key: ${{ secrets.EC2_KEY }}            # 🔑 Llave privada (.pem) en texto plano
           script: |
             echo "🔄 Obteniendo última imagen desde Docker Hub..."
@@ -48,3 +48,4 @@ jobs:
             docker run -d --name frontend-recipe -p 80:80 agente47/frontend-recipe:latest
 
             echo "✅ Despliegue completado correctamente"
+

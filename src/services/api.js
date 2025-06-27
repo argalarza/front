@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3017',  // Base URL de la API
+  baseURL: 'http://localhost:4003',  // Base URL de la API
   headers: {
     'Content-Type': 'application/json',
   },
@@ -50,6 +50,19 @@ export const createOrder = async (orderData) => {
     throw error;
   }
 };
+export const updateUserProfile = async (data, token) => {
+  try {
+    const response = await api.put('/auth/update', data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    throw error;
+  }
+};
 
 export const createPayment = async (paymentData) => {
   try {
@@ -59,4 +72,5 @@ export const createPayment = async (paymentData) => {
     console.error(error);
     throw error;
   }
+  
 };

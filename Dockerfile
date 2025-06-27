@@ -1,29 +1,29 @@
 # Etapa de construcción
 FROM node:18 AS build
 
-# Establecer el directorio de trabajo
+# Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiar los archivos de package.json y package-lock.json
+# Copiar los archivos de dependencias
 COPY package.json package-lock.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias (evita conflictos de peer dependencies)
+RUN npm install --legacy-peer-deps
 
-# Copiar todo el código fuente del proyecto
+# Copiar el resto del código fuente al contenedor
 COPY . .
 
-# Construir la aplicación para producción
+# Construir la aplicación en modo producción
 RUN npm run build
 
-# Etapa para servir la aplicación
+# Etapa para servir la aplicación con Nginx
 FROM nginx:alpine
 
-# Copiar el contenido de la carpeta build al directorio de nginx
+# Copiar los archivos construidos al directorio raíz de Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Exponer el puerto que usará la app
+# Exponer el puerto 80
 EXPOSE 80
 
-# Comando para iniciar nginx
+# Comando por defecto para ejecutar Nginx en primer plano
 CMD ["nginx", "-g", "daemon off;"]

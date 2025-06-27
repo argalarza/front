@@ -71,6 +71,7 @@ body {
   text-align: center;
   transition: all 0.3s ease;
 }
+
 /* Estilos del formulario de login */
 .login-container {
   background-color: #222; /* Fondo oscuro del formulario */

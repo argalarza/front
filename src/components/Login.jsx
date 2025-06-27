@@ -1,89 +1,135 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
 const Login = ({ setLoggedIn }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [captchaValue, setCaptchaValue] = useState(null); // Para guardar el valor del reCAPTCHA
+  const [captchaValue, setCaptchaValue] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Verificar que el CAPTCHA esté completado
     if (!captchaValue) {
-      setErrorMessage('Por favor, completa el CAPTCHA.');
+      setErrorMessage('Por favor, completa el reCAPTCHA.');
       return;
     }
 
-    const credentials = { username, password, captcha: captchaValue };
+    const credentials = {
+      email,
+      password,
+      recaptchaToken: captchaValue,
+      provider: 'local',
+    };
 
     try {
-      const response = await fetch('http://18.204.74.129:3000/login', {
+      const response = await fetch('http://localhost:4002/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Si el login es exitoso, guarda el token y cambia el estado de loggedIn
-        localStorage.setItem('jwtToken', data.token); // Guardar el token en el localStorage
-        setLoggedIn(true); // Cambia el estado para permitir acceso a rutas protegidas
-        navigate('/products'); // Redirige a la página de productos (o cualquier otra página)
+        localStorage.setItem('jwtToken', data.token);
+        setLoggedIn(true);
+        navigate('/products');
       } else {
-        setErrorMessage('Credenciales incorrectas');
+        setErrorMessage(data.error || 'Credenciales incorrectas');
       }
     } catch (error) {
-      setErrorMessage('Error de conexión, intente de nuevo');
+      setErrorMessage('Error de conexión. Inténtalo de nuevo.');
     }
   };
 
   const onCaptchaChange = (value) => {
-    setCaptchaValue(value); // Al cambiar el valor del CAPTCHA, actualizar el estado
+    setCaptchaValue(value);
+  };
+
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    if (!captchaValue) {
+      setErrorMessage('Por favor, completa el reCAPTCHA.');
+      return;
+    }
+
+    const oauthToken = credentialResponse.credential;
+
+    try {
+      const response = await fetch('http://localhost:4002/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'google',
+          oauthToken,
+          recaptchaToken: captchaValue,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('jwtToken', data.token);
+        setLoggedIn(true);
+        navigate('/products');
+      } else {
+        setErrorMessage(data.error || 'Login con Google falló');
+      }
+    } catch (err) {
+      setErrorMessage('Error al conectar con el servidor');
+    }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
+    <GoogleOAuthProvider clientId="1008167384967-nfl2rnbjcn126bgsavbte6uqc6qqojqd.apps.googleusercontent.com">
+      <div className="login-container">
+        <h2>Iniciar sesión</h2>
+
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="email">Correo electrónico</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <ReCAPTCHA
+            sitekey="6LcT524rAAAAAK2zwawAcN2Ye9yslu-cSYMbFfrL"
+            onChange={onCaptchaChange}
           />
+
+          <button type="submit">Login</button>
+        </form>
+         <p style={{ marginTop: '10px' }}>
+  ¿Olvidaste tu contraseña?{' '}
+  <a href="/request-password-reset">Recupérala aquí</a>
+</p>
+
+        <div style={{ marginTop: '20px' }}>
+          <GoogleLogin onSuccess={handleGoogleLoginSuccess} onError={() => setErrorMessage('Error con Google')} />
         </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
 
-        {/* Agregar el widget CAPTCHA */}
-        <ReCAPTCHA
-          sitekey="6LeXYOwqAAAAAOaqrTY6oz8C3MoG5cB_mDLAcCmz" // Clave de sitio de Google reCAPTCHA
-          onChange={onCaptchaChange}
-        />
-
-        <button type="submit">Login</button>
-      </form>
-
-      {errorMessage && <p className="error">{errorMessage}</p>}
-    </div>
+        {errorMessage && <p className="error">{errorMessage}</p>}
+      </div>
+    </GoogleOAuthProvider>
   );
 };
 

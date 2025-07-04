@@ -45,7 +45,6 @@ jobs:
             sudo docker rm frontend-recipe || true
 
             echo "🚀 Iniciando contenedor actualizado..."
-            sudo docker run -d --name frontend-recipe -p 80:80 agente47/frontend-recipe:latest
+            docker run -d --name frontend-recipe -p 80:80 agente47/frontend-recipe:latest
 
-            echo "✅ Contenedor desplegado. Verificando estado..."
-            sudo docker ps
+            echo "✅ Despliegue completado correctamente"

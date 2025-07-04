@@ -3,7 +3,7 @@ name: 🚀 Build & Deploy Frontend to EC2
 on:
   push:
     branches:
-      - main  # 🛠️ Cambia a 'qa' si es entorno de pruebas.
+      - main  # Cambia a 'qa' si quieres hacer despliegue de pruebas
 
 jobs:
   build-and-deploy:
@@ -20,8 +20,8 @@ jobs:
       - name: 🔐 Iniciar sesión en Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}  # 👉 Usuario de Docker Hub
-          password: ${{ secrets.DOCKER_PASSWORD }}  # 👉 Contraseña o Token
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🛠️ Construir y subir imagen Docker
         run: |
@@ -33,18 +33,19 @@ jobs:
       - name: 🚀 Desplegar en EC2 por SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}          # 🌍 IP pública EC2
-          username: ubuntu                       # 👤 Usuario por defecto en AMI Ubuntu
-          key: ${{ secrets.EC2_KEY }}            # 🔑 Llave privada (.pem) en texto plano
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user  # Cambia a ubuntu si tu AMI no es Amazon Linux
+          key: ${{ secrets.EC2_KEY }}
           script: |
             echo "🔄 Obteniendo última imagen desde Docker Hub..."
-            docker pull agente47/frontend-recipe:latest
+            sudo docker pull agente47/frontend-recipe:latest
 
             echo "🧹 Deteniendo contenedor anterior (si existe)..."
-            docker stop frontend-recipe || true
-            docker rm frontend-recipe || true
+            sudo docker stop frontend-recipe || true
+            sudo docker rm frontend-recipe || true
 
             echo "🚀 Iniciando contenedor actualizado..."
-            docker run -d --name frontend-recipe -p 80:80 agente47/frontend-recipe:latest
+            sudo docker run -d --name frontend-recipe -p 80:80 agente47/frontend-recipe:latest
 
-            echo "✅ Despliegue completado correctamente"
+            echo "✅ Contenedor desplegado. Verificando estado..."
+            sudo docker ps

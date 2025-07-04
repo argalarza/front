@@ -34,7 +34,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:4001/auth/register', {
+      const response = await axios.post('http://18.209.183.216:4001/auth/register/', {
         ...formData,
         recaptchaToken: captchaValue,
         provider: 'local',
@@ -63,7 +63,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:4001/auth/register', {
+      const response = await axios.post('http://18.209.183.216:4001/auth/register/', {
         oauthToken: tokenId,
         recaptchaToken: captchaValue,
         provider: 'google',
@@ -88,7 +88,7 @@ const Register = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:4001/auth/register', {
+      const res = await axios.post('http://18.209.183.216:4001/auth/register/', {
         oauthToken: response.accessToken,
         recaptchaToken: captchaValue,
         provider: 'facebook',

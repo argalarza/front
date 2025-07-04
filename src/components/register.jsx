@@ -160,7 +160,7 @@ const Register = () => {
 
         <label>Tipo de usuario</label>
         <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="client">🛍️ Cliente</option>
+          <option value="client">🛍️ Client</option>
           <option value="seller">🧑‍💼 Vendedor</option>
           <option value="admin">🛠️ Administrador</option>
         </select>

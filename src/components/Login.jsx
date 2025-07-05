@@ -26,7 +26,7 @@ const Login = ({ setLoggedIn }) => {
     };
 
     try {
-      const response = await fetch('http://localhost:4002/auth/login', {
+      const response = await fetch('http://100.27.116.212:4002/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
@@ -59,7 +59,7 @@ const Login = ({ setLoggedIn }) => {
     const oauthToken = credentialResponse.credential;
 
     try {
-      const response = await fetch('http://localhost:4002/auth/login', {
+      const response = await fetch('http://100.27.116.212:4002/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -14,7 +14,7 @@ const Login = ({ setLoggedIn }) => {
     e.preventDefault();
 
     if (!captchaValue) {
-      setErrorMessage('Por favor, completa el reCAPTCHA.');
+      setErrorMessage('Por favor, completa el reCAPTCHA!.');
       return;
     }
 

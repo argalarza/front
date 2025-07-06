@@ -8,10 +8,13 @@ import {
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles({
-  form: { maxWidth: 600, margin: "20px auto", backgroundColor: "#1c1c1c", padding: 20, borderRadius: 8 },
-  table: { backgroundColor: "#ffffff", minWidth: 650, color: "#000" },
-  button: { margin: 10, backgroundColor: "#00796b", '&:hover': { backgroundColor: "#004d40" } },
-  dialog: { backgroundColor: "#333", color: "#fff" },
+  form: { maxWidth: 600, margin: "20px auto", backgroundColor: "#1e1e1e", padding: 20, borderRadius: 8 },
+  table: { backgroundColor: "#f4f4f4", minWidth: 650 },
+  button: {
+    margin: 10, backgroundColor: "#1976d2", color: "#fff",
+    '&:hover': { backgroundColor: "#004ba0" }
+  },
+  dialog: { backgroundColor: "#222", color: "#fff" },
   textField: { width: "100%", marginBottom: 10 },
   successMessage: { backgroundColor: "#4caf50", color: "#fff" },
   errorMessage: { backgroundColor: "#f44336", color: "#fff" },
@@ -45,12 +48,16 @@ export default function Products() {
   const [isEditing, setIsEditing] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     const query = `query { listProducts { _id name description price brand } }`;
     try {
-      const res = await axios.post(endpoints.list, { query });
+      const res = await axios.post(endpoints.list, { query }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(res.data.data.listProducts || []);
     } catch {
       setError("Error al obtener productos");
@@ -60,10 +67,12 @@ export default function Products() {
   const handleSearch = async () => {
     const query = `query { searchProducts(keyword: "${product.search}") { _id name description price brand } }`;
     try {
-      const res = await axios.post(endpoints.search, { query });
+      const res = await axios.post(endpoints.search, { query }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(res.data.data.searchProducts || []);
     } catch {
-      setError("Error al buscar");
+      setError("Error al buscar productos");
     }
   };
 
@@ -104,30 +113,37 @@ export default function Products() {
         }) }`;
 
     try {
-      await axios.post(isEditing ? endpoints.update : endpoints.create, { query: q });
-      setSuccessMessage(isEditing ? "Producto actualizado" : "Producto creado");
+      await axios.post(isEditing ? endpoints.update : endpoints.create, { query: q }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccessMessage(isEditing ? "Producto actualizado correctamente" : "Producto creado exitosamente");
       fetchProducts();
       setOpenDialog(false);
-    } catch {
-      setError("Error al guardar");
+    } catch (err) {
+      console.error(err);
+      setError("Error al guardar producto");
     }
   };
 
   const handleDelete = async (_id) => {
     const q = `mutation { deleteProduct(id: "${_id}") }`;
     try {
-      await axios.post(endpoints.delete, { query: q });
-      setSuccessMessage("Producto eliminado");
+      await axios.post(endpoints.delete, { query: q }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccessMessage("Producto eliminado correctamente");
       fetchProducts();
     } catch {
-      setError("Error al eliminar");
+      setError("Error al eliminar producto");
     }
   };
 
   const viewDetails = async (_id) => {
     const q = `query { getProductById(id: "${_id}") { _id name description price brand } }`;
     try {
-      const res = await axios.post(endpoints.getById, { query: q });
+      const res = await axios.post(endpoints.getById, { query: q }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSelectedProduct(res.data.data.getProductById);
     } catch {
       setError("Error al obtener detalles");
@@ -166,8 +182,10 @@ export default function Products() {
             value={product.brand} onChange={handleChange} required />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>{isEditing ? "Actualizar" : "Crear"}</Button>
+          <Button onClick={() => setOpenDialog(false)} className={classes.closeButton}>Cancelar</Button>
+          <Button onClick={handleSubmit} className={classes.button}>
+            {isEditing ? "Actualizar" : "Crear"}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -175,12 +193,12 @@ export default function Products() {
         <Table className={classes.table}>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Descripción</TableCell>
-              <TableCell>Precio</TableCell>
-              <TableCell>Marca</TableCell>
-              <TableCell>Acciones</TableCell>
+              <TableCell><strong>ID</strong></TableCell>
+              <TableCell><strong>Nombre</strong></TableCell>
+              <TableCell><strong>Descripción</strong></TableCell>
+              <TableCell><strong>Precio</strong></TableCell>
+              <TableCell><strong>Marca</strong></TableCell>
+              <TableCell><strong>Acciones</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -194,7 +212,7 @@ export default function Products() {
                 <TableCell>
                   <Button onClick={() => openForm(p)} color="primary">Editar</Button>
                   <Button onClick={() => handleDelete(p._id)} color="secondary">Eliminar</Button>
-                  <Button onClick={() => viewDetails(p._id)} color="info">Ver</Button>
+                  <Button onClick={() => viewDetails(p._id)} style={{ color: '#1976d2' }}>Ver</Button>
                 </TableCell>
               </TableRow>
             ))}

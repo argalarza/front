@@ -3,7 +3,7 @@ name: 🚀 Build & Deploy Frontend to EC2
 on:
   push:
     branches:
-      - main  # Cambia a 'qa' si quieres hacer despliegue de pruebas.....
+      - main  # Cambia a 'qa' si quieres hacer despliegue de pruebas......
 
 jobs:
   build-and-deploy:

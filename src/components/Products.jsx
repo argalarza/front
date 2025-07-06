@@ -48,7 +48,7 @@ export default function Products() {
   const [isEditing, setIsEditing] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("jwtToken");
 
   useEffect(() => { fetchProducts(); }, []);
 

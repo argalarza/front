@@ -1,185 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import './orders.css'; // Para importar los estilos modernos
+import './orders.css';
 
 const Orders = () => {
-  const [username, setUsername] = useState('');
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [totalPrice, setTotalPrice] = useState('');
-  const [productPrice, setProductPrice] = useState('');
-  const [orderId, setOrderId] = useState(null);
-  const [orders, setOrders] = useState([]);  // Asegurarse de que esto sea siempre un arreglo
+  const [orderId, setOrderId] = useState('');
+  const [status, setStatus] = useState('');
   const [orderDetail, setOrderDetail] = useState(null);
-  const [showModal, setShowModal] = useState(false); // Para controlar la ventana flotante
+  const [showModal, setShowModal] = useState(false);
 
-  // Obtener el token JWT almacenado en localStorage
-  const getToken = () => {
-    const token = localStorage.getItem('jwtToken');
-    console.log('JWT Token:', token);  // Verifica si el token está presente
-    return token;
-  };
+  const getToken = () => localStorage.getItem('jwtToken');
 
-  // Configuración de axios con el token JWT
   const axiosConfig = {
     headers: {
-      Authorization: `Bearer ${getToken()}`,  // Incluir el token correctamente
-    },
+      Authorization: `Bearer ${getToken()}`
+    }
   };
 
   const createOrder = async () => {
-    const token = getToken();
-    if (!token) {
-      alert('No JWT token found, please login first.');
-      return;
-    }
-
-    if (!username || !productId || !quantity) {
-      alert("Please fill all fields to create the order.");
+    if (!productId || !quantity) {
+      alert("Por favor ingresa productId y quantity.");
       return;
     }
 
     try {
-      await axios.post('http://localhost:3011/create_order', {
-        username,
-        product_id: productId,
-        quantity,
-      }, axiosConfig);
-      alert('Order created successfully!');
-      fetchOrders(); // Refresca la lista después de crear la orden
+      const response = await axios.post(
+        'http://13.223.17.187:5001/orders',
+        { items: [{ productId, quantity: parseInt(quantity) }] },
+        axiosConfig
+      );
+      alert('Orden creada exitosamente');
+      console.log(response.data);
     } catch (error) {
-      console.error('Error creating order:', error);
-      alert('Error creating order');
+      console.error('Error al crear orden:', error);
+      alert('Fallo al crear orden');
     }
   };
 
   const updateOrder = async () => {
-    if (!orderId || !productId || !quantity || !totalPrice || !productPrice || !username) {
-      alert("Please fill all fields to update the order.");
+    if (!orderId || !status) {
+      alert("Por favor ingresa el ID de la orden y el nuevo estado.");
       return;
     }
 
     try {
-      await axios.put(`http://localhost:3013/update_order/${orderId}`, {
-        product_id: productId,
-        quantity,
-        total_price: totalPrice,
-        product_price: productPrice,
-        username,
-      }, axiosConfig);
-      alert('Order updated successfully!');
-      fetchOrders(); // Refresca la lista después de actualizar
+      const response = await axios.put(
+        `http://13.223.17.187:5001/orders/${orderId}`,
+        { status },
+        axiosConfig
+      );
+      alert('Orden actualizada exitosamente');
+      console.log(response.data);
     } catch (error) {
-      console.error('Error updating order:', error);
-      alert('Error updating order');
+      console.error('Error al actualizar orden:', error);
+      alert('Fallo al actualizar orden');
     }
   };
 
-  const deleteOrder = async (orderId) => {
+  const deleteOrder = async () => {
     if (!orderId) {
-      alert('Please provide a valid Order ID to delete.');
+      alert("Por favor ingresa el ID de la orden a eliminar.");
       return;
     }
+
     try {
-      await axios.delete(`http://localhost:3012/delete_order/${orderId}`, axiosConfig);
-      alert('Order deleted successfully!');
-      fetchOrders(); // Refresca la lista después de eliminar la orden
+      await axios.delete(`http://13.223.17.187:5001/orders/${orderId}`, axiosConfig);
+      alert('Orden eliminada exitosamente');
     } catch (error) {
-      console.error('Error deleting order:', error);
-      alert('Error deleting order');
+      console.error('Error al eliminar orden:', error);
+      alert('Fallo al eliminar orden');
     }
   };
 
-  const fetchOrders = async () => {
-    try {
-      const response = await axios.get('http://localhost:3014/orders', axiosConfig);
-      console.log('API Response:', response.data); // Verifica la estructura
-      setOrders(response.data.orders || response.data); // Accede a la propiedad correcta
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      alert('Error fetching orders');
-    }
-  };
-
-  const fetchOrderDetail = async () => {
+  const getOrderById = async () => {
     if (!orderId) {
-      alert("Please provide a valid Order ID.");
+      alert("Por favor ingresa un ID de orden.");
       return;
     }
 
     try {
-      const response = await axios.get(`http://localhost:3016/orders/${orderId}`, axiosConfig);
+      const response = await axios.get(`http://13.223.17.187:5001/orders/${orderId}`, axiosConfig);
       setOrderDetail(response.data);
-      setShowModal(true); // Abre el modal con los detalles de la orden
+      setShowModal(true);
     } catch (error) {
-      console.error('Error fetching order details:', error);
-      alert('Error fetching order details');
+      console.error('Error al obtener orden:', error);
+      alert('Fallo al obtener orden');
     }
   };
-
-  useEffect(() => {
-    fetchOrders(); // Carga las órdenes cuando el componente se monta
-  }, []);
 
   return (
     <div className="order-container">
-      <h2>Create Order</h2>
-      <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <input type="number" placeholder="Product ID" value={productId} onChange={(e) => setProductId(e.target.value)} />
-      <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      <button onClick={createOrder}>Create Order</button>
+      <h2>Crear Orden</h2>
+      <input type="text" placeholder="Product ID" value={productId} onChange={e => setProductId(e.target.value)} />
+      <input type="number" placeholder="Quantity" value={quantity} onChange={e => setQuantity(e.target.value)} />
+      <button onClick={createOrder}>Crear Orden</button>
 
-      <h2>Update Order</h2>
-      <input type="text" placeholder="Order ID" value={orderId || ''} onChange={(e) => setOrderId(e.target.value)} />
-      <input type="number" placeholder="Product ID" value={productId} onChange={(e) => setProductId(e.target.value)} />
-      <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      <input type="number" placeholder="Total Price" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} />
-      <input type="number" placeholder="Product Price" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
-      <button onClick={updateOrder}>Update Order</button>
+      <h2>Actualizar Estado de Orden</h2>
+      <input type="text" placeholder="Order ID" value={orderId} onChange={e => setOrderId(e.target.value)} />
+      <input type="text" placeholder="Nuevo Estado (e.g., CANCELLED)" value={status} onChange={e => setStatus(e.target.value)} />
+      <button onClick={updateOrder}>Actualizar Orden</button>
 
-      <h2>Orders List</h2>
-      <table className="orders-table">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Username</th>
-            <th>Product ID</th>
-            <th>Quantity</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.length > 0 ? (
-            orders.map((order) => (
-              <tr key={order.id}> {/* Cambié "_id" a "id" según tu respuesta */}
-                <td>{order.id}</td>
-                <td>{order.username}</td>
-                <td>{order.product_id}</td>
-                <td>{order.quantity}</td>
-                <td>
-                  <button onClick={() => { setOrderId(order.id); fetchOrderDetail(); }}>View Details</button>
-                  <button onClick={() => deleteOrder(order.id)}>Delete</button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5">No orders available</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <h2>Eliminar Orden</h2>
+      <input type="text" placeholder="Order ID" value={orderId} onChange={e => setOrderId(e.target.value)} />
+      <button onClick={deleteOrder}>Eliminar Orden</button>
+
+      <h2>Consultar Orden por ID</h2>
+      <input type="text" placeholder="Order ID" value={orderId} onChange={e => setOrderId(e.target.value)} />
+      <button onClick={getOrderById}>Ver Detalles</button>
 
       {showModal && orderDetail && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Order Detail</h3>
-            <p><strong>Username:</strong> {orderDetail.username}</p>
-            <p><strong>Product ID:</strong> {orderDetail.product_id}</p>
-            <p><strong>Quantity:</strong> {orderDetail.quantity}</p>
-            <p><strong>Total Price:</strong> {orderDetail.total_price}</p>
-            <p><strong>Product Price:</strong> {orderDetail.product_price}</p>
-            <button onClick={() => setShowModal(false)}>Close</button>
+            <h3>Detalle de Orden</h3>
+            <p><strong>ID:</strong> {orderDetail.id}</p>
+            <p><strong>Email:</strong> {orderDetail.email}</p>
+            <p><strong>Status:</strong> {orderDetail.status}</p>
+            <p><strong>Total:</strong> ${orderDetail.total}</p>
+            <p><strong>Items:</strong></p>
+            <ul>
+              {orderDetail.items.map((item, index) => (
+                <li key={index}>
+                  Producto ID: {item.productId}, Cantidad: {item.quantity}, Precio: ${item.price}
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => setShowModal(false)}>Cerrar</button>
           </div>
         </div>
       )}

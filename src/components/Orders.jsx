@@ -226,40 +226,78 @@ const Orders = () => {
       <Button variant="outlined" onClick={fetchUserOrders} style={{ marginBottom: 10 }}>🔄 Actualizar Órdenes</Button>
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Total</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Items</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {userOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.id}</TableCell>
-                <TableCell>${order.total}</TableCell>
-                <TableCell>{order.status}</TableCell>
-                <TableCell>
-                  <ul>
-                    {order.items.map((item, i) => (
-                      <li key={i}>{item.productId} x{item.quantity} - ${item.price}</li>
-                    ))}
-                  </ul>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+         <TableHead>
+  <TableRow>
+    <TableCell>ID</TableCell>
+    <TableCell>Total</TableCell>
+    <TableCell>Estado</TableCell>
+    <TableCell>Items</TableCell>
+    <TableCell>Acciones</TableCell>
+  </TableRow>
+</TableHead>
+<TableBody>
+  {userOrders.map((order) => (
+    <TableRow key={order.id}>
+      <TableCell>{order.id}</TableCell>
+      <TableCell>${order.total}</TableCell>
+      <TableCell>{order.status}</TableCell>
+      <TableCell>
+        <ul>
+          {order.items.map((item, i) => (
+            <li key={i}>{item.productId} x{item.quantity} - ${item.price}</li>
+          ))}
+        </ul>
+      </TableCell>
+      <TableCell>
+        <Button size="small" onClick={() => getOrderById(order.id)}>📄</Button>
+        <Button
+          size="small"
+          color="success"
+          onClick={async () => {
+            const newStatus = prompt("Nuevo estado:", order.status);
+            if (newStatus) {
+              try {
+                await axios.put(`http://13.223.17.187:5001/orders/${order.id}`, {
+                  status: newStatus
+                }, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                setSnackbar({ open: true, message: "Orden actualizada", error: false });
+                fetchUserOrders();
+              } catch {
+                setSnackbar({ open: true, message: "Error al actualizar", error: true });
+              }
+            }
+          }}
+        >✏️</Button>
+        <Button
+          size="small"
+          color="error"
+          onClick={async () => {
+            if (window.confirm("¿Eliminar esta orden?")) {
+              try {
+                await axios.delete(`http://13.223.17.187:5001/orders/${order.id}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                setSnackbar({ open: true, message: "Orden eliminada", error: false });
+                fetchUserOrders();
+              } catch {
+                setSnackbar({ open: true, message: "Error al eliminar", error: true });
+              }
+            }
+          }}
+        >🗑️</Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
         </Table>
       </TableContainer>
 
       {/* Administrar una orden por ID */}
       <Typography variant="h6" style={{ marginTop: 40 }}>🔧 Administrar Orden</Typography>
-      <TextField label="Order ID" value={orderId} onChange={e => setOrderId(e.target.value)} style={{ marginRight: 10 }} />
       <TextField label="Nuevo Estado" value={orderStatus} onChange={e => setOrderStatus(e.target.value)} style={{ marginRight: 10 }} />
-      <Button variant="outlined" onClick={getOrderById}>📄 Ver</Button>
-      <Button variant="outlined" color="success" onClick={updateOrder}>✏️ Actualizar</Button>
-      <Button variant="outlined" color="error" onClick={deleteOrder}>🗑️ Eliminar</Button>
 
       {/* Detalle de orden */}
       <Dialog open={showDialog} onClose={() => setShowDialog(false)}>

@@ -299,7 +299,7 @@ const Orders = () => {
       <Typography variant="h6" style={{ marginTop: 40 }}>🔧 Administrar Orden</Typography>
       <TextField label="Nuevo Estado" value={orderStatus} onChange={e => setOrderStatus(e.target.value)} style={{ marginRight: 10 }} />
 
-      {/* Detalle de orden */.}
+      {/* Detalle de orden */}
       <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
         <DialogTitle>Detalle de Orden</DialogTitle>
         <DialogContent>

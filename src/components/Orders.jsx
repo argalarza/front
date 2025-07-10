@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Button, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Snackbar, Typography, Dialog, DialogTitle, DialogContent
+  TableContainer, TableHead, TableRow, Paper, Snackbar,
+  Typography, Dialog, DialogTitle, DialogContent
 } from '@mui/material';
 
 const Orders = () => {
@@ -14,6 +15,8 @@ const Orders = () => {
   const [orderId, setOrderId] = useState('');
   const [orderStatus, setOrderStatus] = useState('');
   const [orderDetails, setOrderDetails] = useState(null);
+
+  const [userOrders, setUserOrders] = useState([]); // 🆕 Nuevas órdenes del usuario
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', error: false });
   const [showDialog, setShowDialog] = useState(false);
@@ -29,6 +32,17 @@ const Orders = () => {
       setProducts(res.data.data.listProducts || []);
     } catch {
       setSnackbar({ open: true, message: "Error al cargar productos", error: true });
+    }
+  };
+
+  const fetchUserOrders = async () => {
+    try {
+      const res = await axios.get("http://13.223.17.187:5001/orders", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserOrders(res.data || []);
+    } catch {
+      setSnackbar({ open: true, message: "Error al listar órdenes", error: true });
     }
   };
 
@@ -74,6 +88,7 @@ const Orders = () => {
       });
 
       setCart([]);
+      fetchUserOrders(); // 🆕 Actualizar lista después de crear orden
       setSnackbar({ open: true, message: "Orden creada exitosamente", error: false });
     } catch (err) {
       console.error(err);
@@ -102,6 +117,7 @@ const Orders = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      fetchUserOrders(); // 🆕 Actualizar lista después de editar
       setSnackbar({ open: true, message: "Orden actualizada", error: false });
     } catch {
       setSnackbar({ open: true, message: "Error al actualizar orden", error: true });
@@ -114,6 +130,7 @@ const Orders = () => {
       await axios.delete(`http://13.223.17.187:5001/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      fetchUserOrders(); // 🆕 Actualizar lista después de eliminar
       setSnackbar({ open: true, message: "Orden eliminada", error: false });
     } catch {
       setSnackbar({ open: true, message: "Error al eliminar orden", error: true });
@@ -122,6 +139,7 @@ const Orders = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchUserOrders(); // 🆕 Cargar órdenes del usuario al iniciar
   }, []);
 
   return (
@@ -203,7 +221,39 @@ const Orders = () => {
       </TableContainer>
       <Button variant="contained" color="primary" onClick={createOrder}>✅ Confirmar Orden</Button>
 
-      {/* Acciones extra */}
+      {/* Órdenes del usuario */}
+      <Typography variant="h6" style={{ marginTop: 40 }}>📋 Mis Órdenes</Typography>
+      <Button variant="outlined" onClick={fetchUserOrders} style={{ marginBottom: 10 }}>🔄 Actualizar Órdenes</Button>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Total</TableCell>
+              <TableCell>Estado</TableCell>
+              <TableCell>Items</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {userOrders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell>{order.id}</TableCell>
+                <TableCell>${order.total}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>
+                  <ul>
+                    {order.items.map((item, i) => (
+                      <li key={i}>{item.productId} x{item.quantity} - ${item.price}</li>
+                    ))}
+                  </ul>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Administrar una orden por ID */}
       <Typography variant="h6" style={{ marginTop: 40 }}>🔧 Administrar Orden</Typography>
       <TextField label="Order ID" value={orderId} onChange={e => setOrderId(e.target.value)} style={{ marginRight: 10 }} />
       <TextField label="Nuevo Estado" value={orderStatus} onChange={e => setOrderStatus(e.target.value)} style={{ marginRight: 10 }} />

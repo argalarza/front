@@ -1,87 +1,32 @@
+// src/components/Payments.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 
-// Configuración fija
+const stripePromise = loadStripe("pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe");
 const API_ORDERS_URL = "http://13.223.17.187:5001";
 const API_PAYMENTS_URL = "http://localhost:5050";
-const STRIPE_PUBLISHABLE_KEY = "pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe";
 
-// Cargar Stripe
-const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
-
-// Estilos generales
 const Wrapper = styled.div`
   max-width: 800px;
   margin: 40px auto;
   font-family: Arial, sans-serif;
 `;
 
-const OrdersTitle = styled.h1`
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 30px;
-`;
-
-const Th = styled.th`
-  text-align: left;
-  padding: 12px;
-  background-color: #007bff;
-  color: white;
-  font-weight: normal;
-`;
-
-const Td = styled.td`
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
-`;
-
-const Tr = styled.tr`
-  &:hover {
-    background-color: #f1f1f1;
-  }
-`;
-
-const OrderButton = styled.button`
-  padding: 8px 12px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  &:hover {
-    background-color: #218838;
-  }
-`;
-
 const PaymentWrapper = styled.div`
   background-color: #f8f9fa;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   max-width: 400px;
   margin: 0 auto 40px;
-`;
-
-const PaymentTitle = styled.h2`
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-`;
-
-const InputLabel = styled.label`
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 5px;
-  display: block;
 `;
 
 const Input = styled.input`
@@ -93,7 +38,10 @@ const Input = styled.input`
   font-size: 16px;
   color: #333;
   box-sizing: border-box;
-  &:focus { outline:none; border-color:#007bff; }
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+  }
 `;
 
 const PayButton = styled.button`
@@ -104,18 +52,19 @@ const PayButton = styled.button`
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size:16px;
-  &:hover { background-color:#0056b3; }
+  font-size: 16px;
+  &:hover {
+    background-color: #0056b3;
+  }
 `;
 
 const Message = styled.p`
-  font-size:14px;
-  text-align:center;
-  margin-top:20px;
-  color: ${({ isError }) => (isError ? 'red' : 'green')};
+  font-size: 14px;
+  text-align: center;
+  margin-top: 20px;
+  color: ${({ isError }) => (isError ? "red" : "green")};
 `;
 
-// Componente principal
 export default function Payments() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -125,7 +74,7 @@ export default function Payments() {
       try {
         const token = localStorage.getItem("jwtToken");
         const { data } = await axios.get(`${API_ORDERS_URL}/orders`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(data);
       } catch (err) {
@@ -137,53 +86,58 @@ export default function Payments() {
 
   return (
     <Wrapper>
-      <OrdersTitle>Mis Órdenes</OrdersTitle>
-      <Table>
+      <h1>Mis Órdenes</h1>
+      <table>
         <thead>
-          <Tr>
-            <Th>ID</Th>
-            <Th>Total</Th>
-            <Th>Estado</Th>
-            <Th>Acción</Th>
-          </Tr>
+          <tr>
+            <th>ID</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
         </thead>
         <tbody>
-          {orders.map(o => (
-            <Tr key={o.id}>
-              <Td>{o.id}</Td>
-              <Td>${o.total.toFixed(2)}</Td>
-              <Td>{o.status}</Td>
-              <Td>
-                <OrderButton
+          {orders.map((o) => (
+            <tr key={o.id}>
+              <td>{o.id}</td>
+              <td>${o.total.toFixed(2)}</td>
+              <td>{o.status}</td>
+              <td>
+                <button
                   onClick={() => setSelectedOrder(o)}
-                  disabled={o.status === 'succeeded'}
+                  disabled={o.status === "succeeded"}
                 >
                   Pagar
-                </OrderButton>
-              </Td>
-            </Tr>
+                </button>
+              </td>
+            </tr>
           ))}
         </tbody>
-      </Table>
+      </table>
 
       {selectedOrder && (
-        <InlinePayment
-          orderId={selectedOrder.id}
-          total={selectedOrder.total}
-          onDone={() => setSelectedOrder(null)}
-        />
+        <Elements stripe={stripePromise}>
+          <PaymentForm orderId={selectedOrder.id} total={selectedOrder.total} onDone={() => setSelectedOrder(null)} />
+        </Elements>
       )}
     </Wrapper>
   );
 }
 
-// Subcomponente para el pago
-function InlinePayment({ orderId, total, onDone }) {
+function PaymentForm({ orderId, total, onDone }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function handlePayment() {
-    setMessage(""); setError("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (!stripe || !elements) return;
+
     try {
       const token = localStorage.getItem("jwtToken");
       const res = await fetch(`${API_PAYMENTS_URL}/payments/create-payment-intent`, {
@@ -194,33 +148,40 @@ function InlinePayment({ orderId, total, onDone }) {
         },
         body: JSON.stringify({ orderId }),
       });
-
       const { clientSecret } = await res.json();
-      const stripe = await stripePromise;
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: { token: "tok_visa" }, // ⚠️ Solo para testing
+          card: elements.getElement(CardElement),
+          billing_details: { email },
         },
       });
 
       if (result.error) throw result.error;
       if (result.paymentIntent.status === "succeeded") {
-        setMessage("Pago confirmado 🎉");
+        setMessage("✅ Pago exitoso");
         setTimeout(onDone, 2000);
       }
     } catch (e) {
       console.error(e);
       setError(e.message || "Error al procesar el pago");
     }
-  }
+  };
 
   return (
     <PaymentWrapper>
-      <PaymentTitle>Pagar Orden #{orderId}</PaymentTitle>
-      <InputLabel>Monto:</InputLabel>
-      <Input value={`$${total.toFixed(2)}`} readOnly />
-      <PayButton onClick={handlePayment}>Pagar Ahora</PayButton>
+      <h2>Pagar orden #{orderId}</h2>
+      <form onSubmit={handleSubmit}>
+        <Input
+          type="email"
+          required
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
+        <PayButton type="submit">Pagar ${total.toFixed(2)}</PayButton>
+      </form>
       {message && <Message>{message}</Message>}
       {error && <Message isError>{error}</Message>}
     </PaymentWrapper>

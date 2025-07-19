@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from 'react-facebook-login';
+
 
 const Register = () => {
   const [formData, setFormData] = useState({

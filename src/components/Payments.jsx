@@ -1,36 +1,156 @@
-import React, { useState } from "react";
+/*
+Componente React para Payments Service sin usar .env, con URLs y claves embebidas directamente en el código.
+
+Requisitos:
+- Listar órdenes
+- Formulario de pago con styled-components
+- Integración con Stripe.js
+- WebSocket para notificaciones
+*/
+
+// src/components/OrdersList.jsx
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import PaymentComponent from "./PaymentComponent";
 
-// Contenedor principal del formulario
+// Configuración embebida (sin .env)
+const API_ORDERS_URL = "http://13.223.17.187:5001";
+
+const Wrapper = styled.div`
+  max-width: 800px;
+  margin: 40px auto;
+  font-family: Arial, sans-serif;
+`;
+const OrdersTitle = styled.h1`
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+`;
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+`;
+const Th = styled.th`
+  text-align: left;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  font-weight: normal;
+`;
+const Td = styled.td`
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+`;
+const Tr = styled.tr`
+  &:hover {
+    background-color: #f1f1f1;
+  }
+`;
+// Renombrado de Button a OrderButton para evitar colisiones
+const OrderButton = styled.button`
+  padding: 8px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+export default function OrdersList() {
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const token = localStorage.getItem("jwtToken");
+        const { data } = await axios.get(
+          `${API_ORDERS_URL}/orders`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setOrders(data);
+      } catch (err) {
+        console.error("Error cargando órdenes:", err);
+      }
+    }
+    fetchOrders();
+  }, []);
+
+  return (
+    <Wrapper>
+      <OrdersTitle>Mis Órdenes</OrdersTitle>
+      <Table>
+        <thead>
+          <Tr>
+            <Th>ID</Th>
+            <Th>Total</Th>
+            <Th>Estado</Th>
+            <Th>Acción</Th>
+          </Tr>
+        </thead>
+        <tbody>
+          {orders.map(o => (
+            <Tr key={o.id}>
+              <Td>{o.id}</Td>
+              <Td>${o.total.toFixed(2)}</Td>
+              <Td>{o.status}</Td>
+              <Td>
+                <OrderButton onClick={() => setSelectedOrder(o)} disabled={o.status === 'succeeded'}>
+                  Pagar
+                </OrderButton>
+              </Td>
+            </Tr>
+          ))}
+        </tbody>
+      </Table>
+
+      {selectedOrder && (
+        <PaymentComponent
+          orderId={selectedOrder.id}
+          total={selectedOrder.total}
+          onDone={() => setSelectedOrder(null)}
+        />
+      )}
+    </Wrapper>
+  );
+}
+
+
+// src/components/PaymentComponent.jsx
+import React, { useState } from "react";
+import styled from "styled-components";
+
+// Stripe.js debe estar cargado en index.html
+// Configuración embebida
+const API_PAYMENTS_URL = "http://localhost:6000";
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe";
+
 const PaymentWrapper = styled.div`
   background-color: #f8f9fa;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
   max-width: 400px;
-  margin: 40px auto;
-  transition: all 0.3s ease-in-out;
-  
-  &:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  }
+  margin: 0 auto 40px;
+  font-family: Arial, sans-serif;
 `;
-
-const Title = styled.h2`
+const PaymentTitle = styled.h2`
   text-align: center;
   color: #333;
-  font-family: 'Arial', sans-serif;
   margin-bottom: 20px;
 `;
-
 const InputLabel = styled.label`
   font-size: 14px;
   color: #555;
   margin-bottom: 5px;
   display: block;
 `;
-
 const Input = styled.input`
   width: 100%;
   padding: 12px;
@@ -40,169 +160,72 @@ const Input = styled.input`
   font-size: 16px;
   color: #333;
   box-sizing: border-box;
-  transition: border-color 0.3s ease-in-out;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-
-  &::placeholder {
-    color: #aaa;
-  }
+  &:focus { outline:none; border-color:#007bff; }
 `;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #333;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease-in-out;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-`;
-
-const Button = styled.button`
+// Renombrado de Button a PayButton para evitar colisiones
+const PayButton = styled.button`
   width: 100%;
   padding: 14px;
   background-color: #007bff;
-  border: none;
   color: white;
-  font-size: 16px;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
-  box-sizing: border-box;
-  transition: background-color 0.3s ease-in-out;
-
-  &:hover {
-    background-color: #0056b3;
-  }
+  font-size:16px;
+  &:hover { background-color:#0056b3; }
 `;
-
 const Message = styled.p`
-  font-size: 14px;
-  text-align: center;
-  padding: 12px;
-  margin-top: 20px;
-  border-radius: 8px;
+  font-size:14px;
+  text-align:center;
+  margin-top:20px;
   color: ${({ isError }) => (isError ? 'red' : 'green')};
-  background-color: ${({ isError }) => (isError ? '#f8d7da' : '#d4edda')};
-  transition: all 0.3s ease-in-out;
 `;
 
-const PaymentComponent = () => {
-  const [orderId, setOrderId] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("credit_card");
-  const [amount, setAmount] = useState("");
+export default function PaymentComponent({ orderId, total, onDone }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Función para validar si el orderId es un ObjectId válido
-  const isValidObjectId = (id) => {
-    return /^[a-fA-F0-9]{24}$/.test(id);  // Expresión regular para validar ObjectId de MongoDB
-  };
-
-  const handlePayment = async () => {
-    if (!isValidObjectId(orderId)) {
-      setError("El ID de la orden no es válido.");
-      setMessage("");
-      return;
-    }
-
-    if (isNaN(amount) || parseFloat(amount) <= 0) {
-      setError("El monto debe ser un número positivo.");
-      setMessage("");
-      return;
-    }
-
+  async function handlePayment() {
+    setMessage(''); setError('');
     try {
-      // Obtén el token JWT desde el almacenamiento local (o contexto si lo tienes)
-      const token = localStorage.getItem("jwtToken");
-
-      if (!token) {
-        setError("No se encontró el token de autenticación.");
-        setMessage("");
-        return;
-      }
-
-      // Configuración de la solicitud
-      const paymentRequest = {
-        order_id: orderId,
-        payment_method: paymentMethod,
-        amount: parseFloat(amount),
-      };
-
-      // Realiza la solicitud POST para crear el pago
-      const response = await axios.post(
-        "http://localhost:3017/create_payment", // Asegúrate de que esta URL sea correcta
-        paymentRequest,
+      const token = localStorage.getItem('jwtToken');
+      const res = await fetch(
+        `${API_PAYMENTS_URL}/payments/create-payment-intent`,
         {
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`, // Token de autorización en el encabezado
+            'Content-Type':'application/json',
+            Authorization: `Bearer ${token}`
           },
+          body: JSON.stringify({ orderId })
         }
       );
+      const { clientSecret } = await res.json();
 
-      // Si el pago es exitoso, muestra el mensaje
-      setMessage(response.data.message);
-      setError(""); // Limpiar posibles errores previos
-    } catch (err) {
-      // Si hay error, muestra el detalle
-      setMessage("");
-      setError(err.response?.data?.detail || "Hubo un error al realizar el pago.");
+      const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: { token: 'tok_visa' } }
+      });
+
+      if (result.error) throw result.error;
+      if (result.paymentIntent.status === 'succeeded') {
+        setMessage('Pago confirmado 🎉');
+        setTimeout(onDone, 2000);
+      }
+    } catch (e) {
+      console.error(e);
+      setError(e.message || 'Error al procesar el pago');
     }
-  };
+  }
 
   return (
     <PaymentWrapper>
-      <Title>Formulario de Pago</Title>
-      <div>
-        <InputLabel htmlFor="orderId">ID de Orden:</InputLabel>
-        <Input
-          type="text"
-          id="orderId"
-          value={orderId}
-          onChange={(e) => setOrderId(e.target.value)}
-          placeholder="Ingrese el ID de la orden"
-        />
-      </div>
-      <div>
-        <InputLabel htmlFor="paymentMethod">Método de Pago:</InputLabel>
-        <Select
-          id="paymentMethod"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-        >
-          <option value="credit_card">Tarjeta de Crédito</option>
-          <option value="paypal">PayPal</option>
-          <option value="bank_transfer">Transferencia Bancaria</option>
-        </Select>
-      </div>
-      <div>
-        <InputLabel htmlFor="amount">Monto:</InputLabel>
-        <Input
-          type="number"
-          id="amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Ingrese el monto"
-        />
-      </div>
-      <Button onClick={handlePayment}>Realizar Pago</Button>
-
+      <PaymentTitle>Pagar Orden #{orderId}</PaymentTitle>
+      <InputLabel>Monto:</InputLabel>
+      <Input value={`$${total.toFixed(2)}`} readOnly />
+      <PayButton onClick={handlePayment}>Pagar Ahora</PayButton>
       {message && <Message>{message}</Message>}
       {error && <Message isError>{error}</Message>}
     </PaymentWrapper>
   );
-};
-
-export default PaymentComponent;
+}

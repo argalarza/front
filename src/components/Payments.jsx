@@ -1,29 +1,35 @@
-// src/components/Payments.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import axios from "axios";
+import { loadStripe } from "@stripe/stripe-js";
 
-// Configuración embebida
+// Configuración fija
 const API_ORDERS_URL = "http://13.223.17.187:5001";
 const API_PAYMENTS_URL = "http://localhost:5050";
 const STRIPE_PUBLISHABLE_KEY = "pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe";
 
-// Estilos compartidos
+// Cargar Stripe
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+
+// Estilos generales
 const Wrapper = styled.div`
   max-width: 800px;
   margin: 40px auto;
   font-family: Arial, sans-serif;
 `;
+
 const OrdersTitle = styled.h1`
   text-align: center;
   color: #333;
   margin-bottom: 20px;
 `;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 30px;
 `;
+
 const Th = styled.th`
   text-align: left;
   padding: 12px;
@@ -31,15 +37,18 @@ const Th = styled.th`
   color: white;
   font-weight: normal;
 `;
+
 const Td = styled.td`
   padding: 12px;
   border-bottom: 1px solid #ddd;
 `;
+
 const Tr = styled.tr`
   &:hover {
     background-color: #f1f1f1;
   }
 `;
+
 const OrderButton = styled.button`
   padding: 8px 12px;
   background-color: #28a745;
@@ -53,7 +62,6 @@ const OrderButton = styled.button`
   }
 `;
 
-// Estilos de pago
 const PaymentWrapper = styled.div`
   background-color: #f8f9fa;
   padding: 30px;
@@ -62,17 +70,20 @@ const PaymentWrapper = styled.div`
   max-width: 400px;
   margin: 0 auto 40px;
 `;
+
 const PaymentTitle = styled.h2`
   text-align: center;
   color: #333;
   margin-bottom: 20px;
 `;
+
 const InputLabel = styled.label`
   font-size: 14px;
   color: #555;
   margin-bottom: 5px;
   display: block;
 `;
+
 const Input = styled.input`
   width: 100%;
   padding: 12px;
@@ -84,6 +95,7 @@ const Input = styled.input`
   box-sizing: border-box;
   &:focus { outline:none; border-color:#007bff; }
 `;
+
 const PayButton = styled.button`
   width: 100%;
   padding: 14px;
@@ -95,6 +107,7 @@ const PayButton = styled.button`
   font-size:16px;
   &:hover { background-color:#0056b3; }
 `;
+
 const Message = styled.p`
   font-size:14px;
   text-align:center;
@@ -102,7 +115,7 @@ const Message = styled.p`
   color: ${({ isError }) => (isError ? 'red' : 'green')};
 `;
 
-// Componente principal (único export default permitido)
+// Componente principal
 export default function Payments() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -164,7 +177,7 @@ export default function Payments() {
   );
 }
 
-// Componente interno (NO usar export)
+// Subcomponente para el pago
 function InlinePayment({ orderId, total, onDone }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -173,24 +186,22 @@ function InlinePayment({ orderId, total, onDone }) {
     setMessage(""); setError("");
     try {
       const token = localStorage.getItem("jwtToken");
-      const res = await fetch(
-        `${API_PAYMENTS_URL}/payments/create-payment-intent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ orderId }),
-        }
-      );
-      const { clientSecret } = await res.json();
+      const res = await fetch(`${API_PAYMENTS_URL}/payments/create-payment-intent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
 
-      const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+      const { clientSecret } = await res.json();
+      const stripe = await stripePromise;
+
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: { token: "tok_visa" } // Solo para pruebas
-        }
+          card: { token: "tok_visa" }, // ⚠️ Solo para testing
+        },
       });
 
       if (result.error) throw result.error;

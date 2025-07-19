@@ -1,4 +1,3 @@
-// src/components/Payments.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import axios from "axios";
@@ -14,17 +13,55 @@ const stripePromise = loadStripe("pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICE
 const API_ORDERS_URL = "http://13.223.17.187:5001";
 const API_PAYMENTS_URL = "http://localhost:5050";
 
+// Estilos
 const Wrapper = styled.div`
   max-width: 800px;
   margin: 40px auto;
   font-family: Arial, sans-serif;
 `;
 
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+`;
+
+const Th = styled.th`
+  text-align: left;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+`;
+
+const Td = styled.td`
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+`;
+
+const Tr = styled.tr`
+  &:hover {
+    background-color: #f1f1f1;
+  }
+`;
+
+const OrderButton = styled.button`
+  padding: 8px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
 const PaymentWrapper = styled.div`
   background-color: #f8f9fa;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
   max-width: 400px;
   margin: 0 auto 40px;
 `;
@@ -37,11 +74,6 @@ const Input = styled.input`
   border: 1px solid #ccc;
   font-size: 16px;
   color: #333;
-  box-sizing: border-box;
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
 `;
 
 const PayButton = styled.button`
@@ -87,37 +119,41 @@ export default function Payments() {
   return (
     <Wrapper>
       <h1>Mis Órdenes</h1>
-      <table>
+      <Table>
         <thead>
-          <tr>
-            <th>ID</th>
-            <th>Total</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
+          <Tr>
+            <Th>ID</Th>
+            <Th>Total</Th>
+            <Th>Estado</Th>
+            <Th>Acción</Th>
+          </Tr>
         </thead>
         <tbody>
           {orders.map((o) => (
-            <tr key={o.id}>
-              <td>{o.id}</td>
-              <td>${o.total.toFixed(2)}</td>
-              <td>{o.status}</td>
-              <td>
-                <button
+            <Tr key={o.id}>
+              <Td>{o.id}</Td>
+              <Td>${o.total.toFixed(2)}</Td>
+              <Td>{o.status}</Td>
+              <Td>
+                <OrderButton
                   onClick={() => setSelectedOrder(o)}
                   disabled={o.status === "succeeded"}
                 >
                   Pagar
-                </button>
-              </td>
-            </tr>
+                </OrderButton>
+              </Td>
+            </Tr>
           ))}
         </tbody>
-      </table>
+      </Table>
 
       {selectedOrder && (
         <Elements stripe={stripePromise}>
-          <PaymentForm orderId={selectedOrder.id} total={selectedOrder.total} onDone={() => setSelectedOrder(null)} />
+          <PaymentForm
+            orderId={selectedOrder.id}
+            total={selectedOrder.total}
+            onDone={() => setSelectedOrder(null)}
+          />
         </Elements>
       )}
     </Wrapper>
@@ -158,9 +194,10 @@ function PaymentForm({ orderId, total, onDone }) {
       });
 
       if (result.error) throw result.error;
+
       if (result.paymentIntent.status === "succeeded") {
-        setMessage("✅ Pago exitoso");
-        setTimeout(onDone, 2000);
+        setMessage("✅ ¡Pago exitoso!");
+        setTimeout(onDone, 2500);
       }
     } catch (e) {
       console.error(e);
@@ -170,16 +207,18 @@ function PaymentForm({ orderId, total, onDone }) {
 
   return (
     <PaymentWrapper>
-      <h2>Pagar orden #{orderId}</h2>
+      <h2>Pagar Orden #{orderId}</h2>
       <form onSubmit={handleSubmit}>
         <Input
           type="email"
-          required
           placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
-        <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
+        <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "12px", marginBottom: "15px" }}>
+          <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
+        </div>
         <PayButton type="submit">Pagar ${total.toFixed(2)}</PayButton>
       </form>
       {message && <Message>{message}</Message>}

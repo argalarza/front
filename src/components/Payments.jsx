@@ -1,79 +1,103 @@
+// src/components/Payments.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe("pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe");
+// Configuración
 const API_ORDERS_URL = "http://13.223.17.187:5001";
 const API_PAYMENTS_URL = "http://localhost:5050";
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe";
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
-// Estilos
+// 💅 Estilos
 const Wrapper = styled.div`
-  max-width: 800px;
+  max-width: 900px;
   margin: 40px auto;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
+`;
+
+const OrdersTitle = styled.h1`
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 `;
 
 const Th = styled.th`
-  text-align: left;
-  padding: 12px;
+  padding: 14px;
   background-color: #007bff;
   color: white;
+  text-align: left;
 `;
 
 const Td = styled.td`
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
+  padding: 14px;
+  border-bottom: 1px solid #ccc;
 `;
 
 const Tr = styled.tr`
   &:hover {
-    background-color: #f1f1f1;
+    background-color: #f9f9f9;
   }
 `;
 
 const OrderButton = styled.button`
-  padding: 8px 12px;
+  padding: 10px 15px;
   background-color: #28a745;
   color: white;
+  font-size: 14px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
   &:hover {
     background-color: #218838;
+  }
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
 `;
 
 const PaymentWrapper = styled.div`
-  background-color: #f8f9fa;
+  background-color: #f1f1f1;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-  max-width: 400px;
-  margin: 0 auto 40px;
+  box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+  max-width: 450px;
+  margin: 0 auto;
+`;
+
+const PaymentTitle = styled.h2`
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+`;
+
+const InputLabel = styled.label`
+  display: block;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 6px;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px;
-  margin-bottom: 15px;
-  border-radius: 8px;
+  margin-bottom: 18px;
+  font-size: 15px;
   border: 1px solid #ccc;
-  font-size: 16px;
-  color: #333;
+  border-radius: 8px;
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+  }
 `;
 
 const PayButton = styled.button`
@@ -81,10 +105,10 @@ const PayButton = styled.button`
   padding: 14px;
   background-color: #007bff;
   color: white;
+  font-size: 16px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
   &:hover {
     background-color: #0056b3;
   }
@@ -97,6 +121,7 @@ const Message = styled.p`
   color: ${({ isError }) => (isError ? "red" : "green")};
 `;
 
+// 🔷 Componente principal
 export default function Payments() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -105,10 +130,10 @@ export default function Payments() {
     async function fetchOrders() {
       try {
         const token = localStorage.getItem("jwtToken");
-        const { data } = await axios.get(`${API_ORDERS_URL}/orders`, {
+        const res = await axios.get(`${API_ORDERS_URL}/orders`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setOrders(data);
+        setOrders(res.data);
       } catch (err) {
         console.error("Error cargando órdenes:", err);
       }
@@ -118,7 +143,7 @@ export default function Payments() {
 
   return (
     <Wrapper>
-      <h1>Mis Órdenes</h1>
+      <OrdersTitle>Mis Órdenes</OrdersTitle>
       <Table>
         <thead>
           <Tr>
@@ -149,7 +174,7 @@ export default function Payments() {
 
       {selectedOrder && (
         <Elements stripe={stripePromise}>
-          <PaymentForm
+          <InlinePayment
             orderId={selectedOrder.id}
             total={selectedOrder.total}
             onDone={() => setSelectedOrder(null)}
@@ -160,14 +185,15 @@ export default function Payments() {
   );
 }
 
-function PaymentForm({ orderId, total, onDone }) {
+// 🧾 Subcomponente de pago
+function InlinePayment({ orderId, total, onDone }) {
   const stripe = useStripe();
   const elements = useElements();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  async function handlePayment(e) {
     e.preventDefault();
     setMessage("");
     setError("");
@@ -176,14 +202,16 @@ function PaymentForm({ orderId, total, onDone }) {
 
     try {
       const token = localStorage.getItem("jwtToken");
+
       const res = await fetch(`${API_PAYMENTS_URL}/payments/create-payment-intent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, email }),
       });
+
       const { clientSecret } = await res.json();
 
       const result = await stripe.confirmCardPayment(clientSecret, {
@@ -191,35 +219,42 @@ function PaymentForm({ orderId, total, onDone }) {
           card: elements.getElement(CardElement),
           billing_details: { email },
         },
+        receipt_email: email,
       });
 
       if (result.error) throw result.error;
 
       if (result.paymentIntent.status === "succeeded") {
-        setMessage("✅ ¡Pago exitoso!");
-        setTimeout(onDone, 2500);
+        setMessage("✅ Pago realizado exitosamente.");
+        setTimeout(onDone, 2000);
       }
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Error al procesar el pago");
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Ocurrió un error con el pago.");
     }
-  };
+  }
 
   return (
     <PaymentWrapper>
-      <h2>Pagar Orden #{orderId}</h2>
-      <form onSubmit={handleSubmit}>
+      <PaymentTitle>Pagar Orden #{orderId}</PaymentTitle>
+      <form onSubmit={handlePayment}>
+        <InputLabel>Correo electrónico:</InputLabel>
         <Input
           type="email"
-          placeholder="Correo electrónico"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
           required
+          placeholder="usuario@ejemplo.com"
+          onChange={(e) => setEmail(e.target.value)}
         />
-        <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "12px", marginBottom: "15px" }}>
+
+        <InputLabel>Tarjeta:</InputLabel>
+        <div style={{ padding: "12px", border: "1px solid #ccc", borderRadius: "8px", marginBottom: "18px" }}>
           <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
         </div>
-        <PayButton type="submit">Pagar ${total.toFixed(2)}</PayButton>
+
+        <PayButton type="submit" disabled={!stripe}>
+          Pagar ${total.toFixed(2)}
+        </PayButton>
       </form>
       {message && <Message>{message}</Message>}
       {error && <Message isError>{error}</Message>}

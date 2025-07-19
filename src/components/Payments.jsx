@@ -5,7 +5,7 @@ import axios from "axios";
 
 // Configuración embebida
 const API_ORDERS_URL = "http://13.223.17.187:5001";
-const API_PAYMENTS_URL = "http://localhost:6000";
+const API_PAYMENTS_URL = "http://localhost:5050";
 const STRIPE_PUBLISHABLE_KEY = "pk_test_51RkXbvFMAadEqCes0jBt7WLEu6pMNvf4oPICEWIIxpgkNOlxlRvifSOLkFxp7426bi89mKPqvFP7sWY4wM7iJuc900CVKYucOe";
 
 // Estilos compartidos

@@ -1,0 +1,52 @@
+name: SonarQube Scan - front-service
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - 'Front/**'
+      - '.github/workflows/qa.yml'
+
+jobs:
+  sonarqube:
+    name: 🔍 Análisis de calidad con SonarQube
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: 🧾 Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🧪 Ejecutar pruebas y generar cobertura
+        run: |
+          if grep -q "\"test\":" package.json; then
+            npm run test -- --coverage || true
+          else
+            echo "No test script found"
+          fi
+
+      - name: 📊 Ejecutar análisis SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=front \
+            -Dsonar.projectName=front-service \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions=**/node_modules/**,**/*.test.js,**/*.spec.js \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN

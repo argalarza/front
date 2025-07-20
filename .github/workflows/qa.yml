@@ -3,7 +3,7 @@ name: SonarQube Scan - front-service
 on:
   push:
     branches:
-      - test
+      - main
     paths:
       - 'Front/**'
       - '.github/workflows/qa.yml'

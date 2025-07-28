@@ -1,4 +1,4 @@
-name: SonarQube Scan - front-service
+name: 🔍 SonarQube Scan - front-service
 
 on:
   push:
@@ -10,12 +10,8 @@ on:
 
 jobs:
   sonarqube:
-    name: 🔍 Análisis de calidad con SonarQube.
+    name: 🔬 Análisis de calidad con SonarQube
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: .
 
     steps:
       - name: 🧾 Clonar repositorio
@@ -34,7 +30,7 @@ jobs:
           if grep -q "\"test\":" package.json; then
             npm run test -- --coverage || true
           else
-            echo "No test script found"
+            echo "No se encontró script de pruebas en package.json"
           fi
 
       - name: 📊 Ejecutar análisis SonarQube
@@ -46,6 +42,7 @@ jobs:
             -Dsonar.projectKey=front \
             -Dsonar.projectName=front-service \
             -Dsonar.sources=. \
+            -Dsonar.sourceEncoding=UTF-8 \
             -Dsonar.exclusions=**/node_modules/**,**/*.test.js,**/*.spec.js \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
             -Dsonar.host.url=$SONAR_HOST_URL \

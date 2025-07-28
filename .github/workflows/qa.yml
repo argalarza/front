@@ -10,7 +10,7 @@ on:
 
 jobs:
   sonarqube:
-    name: 🔍 Análisis de calidad con SonarQube
+    name: 🔍 Análisis de calidad con SonarQube.
     runs-on: ubuntu-latest
 
     defaults:

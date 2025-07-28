@@ -1,9 +1,10 @@
+// src/components/Products.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Button, Dialog, DialogActions, DialogContent, DialogTitle,
   TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Snackbar
+  TableContainer, TableHead, TableRow, Paper, Snackbar, Alert
 } from '@mui/material';
 import { makeStyles } from "@mui/styles";
 
@@ -163,11 +164,13 @@ export default function Products() {
 
       <Snackbar
         open={!!error || !!successMessage}
-        message={error || successMessage}
         autoHideDuration={3000}
         onClose={() => { setError(""); setSuccessMessage(""); }}
-        ContentProps={{ className: error ? classes.errorMessage : classes.successMessage }}
-      />
+      >
+        <Alert severity={error ? "error" : "success"} sx={{ width: '100%' }}>
+          {error || successMessage}
+        </Alert>
+      </Snackbar>
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} className={classes.dialog}>
         <DialogTitle>{isEditing ? "Editar Producto" : "Crear Producto"}</DialogTitle>

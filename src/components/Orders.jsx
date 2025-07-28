@@ -1,9 +1,11 @@
+// Orders.jsx - Versión corregida y optimizada
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Snackbar,
-  Typography, Dialog, DialogTitle, DialogContent
+  Typography, Dialog, DialogTitle, DialogContent, Alert
 } from '@mui/material';
 
 const Orders = () => {
@@ -11,18 +13,11 @@ const Orders = () => {
   const [cart, setCart] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  const [orderId, setOrderId] = useState('');
-  const [orderStatus, setOrderStatus] = useState('');
   const [orderDetails, setOrderDetails] = useState(null);
-
-  const [userOrders, setUserOrders] = useState([]); // 🆕 Nuevas órdenes del usuario
-
+  const [userOrders, setUserOrders] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', error: false });
   const [showDialog, setShowDialog] = useState(false);
-
   const token = localStorage.getItem('jwtToken');
-
   const fetchProducts = async () => {
     const query = `query { listProducts { _id name description price brand } }`;
     try {
@@ -47,7 +42,7 @@ const Orders = () => {
   };
 
   const addToCart = () => {
-    if (!selectedProduct || !quantity || quantity <= 0) return;
+    if (!selectedProduct || quantity <= 0) return;
     const existing = cart.find(item => item.productId === selectedProduct._id);
     if (existing) {
       setCart(cart.map(item =>
@@ -79,16 +74,13 @@ const Orders = () => {
 
     try {
       await axios.post('http://13.223.17.187:5001/orders', {
-        items: cart.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity
-        }))
+        items: cart.map(item => ({ productId: item.productId, quantity: item.quantity }))
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       setCart([]);
-      fetchUserOrders(); // 🆕 Actualizar lista después de crear orden
+      fetchUserOrders();
       setSnackbar({ open: true, message: "Orden creada exitosamente", error: false });
     } catch (err) {
       console.error(err);
@@ -96,10 +88,9 @@ const Orders = () => {
     }
   };
 
-  const getOrderById = async () => {
-    if (!orderId) return;
+  const getOrderById = async (id) => {
     try {
-      const response = await axios.get(`http://13.223.17.187:5001/orders/${orderId}`, {
+      const response = await axios.get(`http://13.223.17.187:5001/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrderDetails(response.data);
@@ -109,46 +100,17 @@ const Orders = () => {
     }
   };
 
-  const updateOrder = async () => {
-    if (!orderId || !orderStatus) return;
-    try {
-      await axios.put(`http://13.223.17.187:5001/orders/${orderId}`, {
-        status: orderStatus
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchUserOrders(); // 🆕 Actualizar lista después de editar
-      setSnackbar({ open: true, message: "Orden actualizada", error: false });
-    } catch {
-      setSnackbar({ open: true, message: "Error al actualizar orden", error: true });
-    }
-  };
-
-  const deleteOrder = async () => {
-    if (!orderId) return;
-    try {
-      await axios.delete(`http://13.223.17.187:5001/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchUserOrders(); // 🆕 Actualizar lista después de eliminar
-      setSnackbar({ open: true, message: "Orden eliminada", error: false });
-    } catch {
-      setSnackbar({ open: true, message: "Error al eliminar orden", error: true });
-    }
-  };
-
   useEffect(() => {
     fetchProducts();
-    fetchUserOrders(); // 🆕 Cargar órdenes del usuario al iniciar
+    fetchUserOrders();
   }, []);
 
   return (
     <div style={{ padding: 30 }}>
       <Typography variant="h4" gutterBottom>🧾 Gestión de Órdenes</Typography>
 
-      {/* Tabla de productos */}
       <Typography variant="h6">📦 Productos</Typography>
-      <TableContainer component={Paper} style={{ marginBottom: 20 }}>
+      <TableContainer component={Paper} sx={{ mb: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -171,19 +133,16 @@ const Orders = () => {
                   <TextField
                     type="number"
                     size="small"
-                    style={{ width: 80 }}
                     value={selectedProduct?._id === prod._id ? quantity : 1}
                     onChange={(e) => {
                       setSelectedProduct(prod);
                       setQuantity(parseInt(e.target.value));
                     }}
+                    sx={{ width: 80 }}
                   />
                 </TableCell>
                 <TableCell>
-                  <Button variant="contained" onClick={() => {
-                    setSelectedProduct(prod);
-                    addToCart();
-                  }}>Agregar</Button>
+                  <Button variant="contained" onClick={() => { setSelectedProduct(prod); addToCart(); }}>Agregar</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -191,9 +150,8 @@ const Orders = () => {
         </Table>
       </TableContainer>
 
-      {/* Carrito */}
       <Typography variant="h6">🛒 Carrito</Typography>
-      <TableContainer component={Paper} style={{ marginBottom: 20 }}>
+      <TableContainer component={Paper} sx={{ mb: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -219,87 +177,79 @@ const Orders = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
       <Button variant="contained" color="primary" onClick={createOrder}>✅ Confirmar Orden</Button>
 
-      {/* Órdenes del usuario */}
-      <Typography variant="h6" style={{ marginTop: 40 }}>📋 Mis Órdenes</Typography>
-      <Button variant="outlined" onClick={fetchUserOrders} style={{ marginBottom: 10 }}>🔄 Actualizar Órdenes</Button>
+      <Typography variant="h6" sx={{ mt: 4 }}>📋 Mis Órdenes</Typography>
+      <Button variant="outlined" onClick={fetchUserOrders} sx={{ mb: 2 }}>🔄 Actualizar Órdenes</Button>
       <TableContainer component={Paper}>
         <Table>
-         <TableHead>
-  <TableRow>
-    <TableCell>ID</TableCell>
-    <TableCell>Total</TableCell>
-    <TableCell>Estado</TableCell>
-    <TableCell>Items</TableCell>
-    <TableCell>Acciones</TableCell>
-  </TableRow>
-</TableHead>
-<TableBody>
-  {userOrders.map((order) => (
-    <TableRow key={order.id}>
-      <TableCell>{order.id}</TableCell>
-      <TableCell>${order.total}</TableCell>
-      <TableCell>{order.status}</TableCell>
-      <TableCell>
-        <ul>
-          {order.items.map((item, i) => (
-            <li key={i}>{item.productId} x{item.quantity} - ${item.price}</li>
-          ))}
-        </ul>
-      </TableCell>
-      <TableCell>
-        <Button size="small" onClick={() => getOrderById(order.id)}>📄</Button>
-        <Button
-          size="small"
-          color="success"
-          onClick={async () => {
-            const newStatus = prompt("Nuevo estado:", order.status);
-            if (newStatus) {
-              try {
-                await axios.put(`http://13.223.17.187:5001/orders/${order.id}`, {
-                  status: newStatus
-                }, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-                setSnackbar({ open: true, message: "Orden actualizada", error: false });
-                fetchUserOrders();
-              } catch {
-                setSnackbar({ open: true, message: "Error al actualizar", error: true });
-              }
-            }
-          }}
-        >✏️</Button>
-        <Button
-          size="small"
-          color="error"
-          onClick={async () => {
-            if (window.confirm("¿Eliminar esta orden?")) {
-              try {
-                await axios.delete(`http://13.223.17.187:5001/orders/${order.id}`, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-                setSnackbar({ open: true, message: "Orden eliminada", error: false });
-                fetchUserOrders();
-              } catch {
-                setSnackbar({ open: true, message: "Error al eliminar", error: true });
-              }
-            }
-          }}
-        >🗑️</Button>
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
-
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Total</TableCell>
+              <TableCell>Estado</TableCell>
+              <TableCell>Items</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {userOrders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell>{order.id}</TableCell>
+                <TableCell>${order.total}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>
+                  <ul>
+                    {order.items.map((item) => (
+                      <li key={`${order.id}-${item.productId}`}>{item.productId} x{item.quantity} - ${item.price}</li>
+                    ))}
+                  </ul>
+                </TableCell>
+                <TableCell>
+                  <Button size="small" onClick={() => getOrderById(order.id)}>📄</Button>
+                  <Button
+                    size="small"
+                    color="success"
+                    onClick={async () => {
+                      const newStatus = prompt("Nuevo estado:", order.status);
+                      if (newStatus) {
+                        try {
+                          await axios.put(`http://13.223.17.187:5001/orders/${order.id}`, { status: newStatus }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          setSnackbar({ open: true, message: "Orden actualizada", error: false });
+                          fetchUserOrders();
+                        } catch {
+                          setSnackbar({ open: true, message: "Error al actualizar", error: true });
+                        }
+                      }
+                    }}
+                  >✏️</Button>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={async () => {
+                      if (window.confirm("¿Eliminar esta orden?")) {
+                        try {
+                          await axios.delete(`http://13.223.17.187:5001/orders/${order.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          setSnackbar({ open: true, message: "Orden eliminada", error: false });
+                          fetchUserOrders();
+                        } catch {
+                          setSnackbar({ open: true, message: "Error al eliminar", error: true });
+                        }
+                      }
+                    }}
+                  >🗑️</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Administrar una orden por ID */}
-      <Typography variant="h6" style={{ marginTop: 40 }}>🔧 Administrar Orden</Typography>
-      <TextField label="Nuevo Estado" value={orderStatus} onChange={e => setOrderStatus(e.target.value)} style={{ marginRight: 10 }} />
-
-      {/* Detalle de orden */}
       <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
         <DialogTitle>Detalle de Orden</DialogTitle>
         <DialogContent>
@@ -311,8 +261,8 @@ const Orders = () => {
               <p><strong>Total:</strong> ${orderDetails.total}</p>
               <p><strong>Items:</strong></p>
               <ul>
-                {orderDetails.items.map((item, i) => (
-                  <li key={i}>
+                {orderDetails.items.map(item => (
+                  <li key={`${orderDetails.id}-${item.productId}`}>
                     Producto: {item.productId} | Cantidad: {item.quantity} | Precio: ${item.price}
                   </li>
                 ))}
@@ -326,14 +276,11 @@ const Orders = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-        ContentProps={{
-          style: {
-            backgroundColor: snackbar.error ? '#f44336' : '#4caf50',
-            color: '#fff'
-          }
-        }}
-      />
+      >
+        <Alert severity={snackbar.error ? 'error' : 'success'} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

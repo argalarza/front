@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { updateUserProfile } from '../services/api'; // solo para el PUT
+import { updateUserProfile } from '../services/api';
 import axios from 'axios';
 
 const EditProfile = () => {
-  const token = localStorage.getItem('jwtToken'); // asegúrate de guardarlo así en login
+  const token = localStorage.getItem('jwtToken');
 
   const [form, setForm] = useState({
     name: '',
@@ -15,21 +15,23 @@ const EditProfile = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // ✅ Aquí haces la conexión directa al backend en el puerto 4003
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.put('http://localhost:4003/auth/update', {
+        const res = await axios.get('http://localhost:4003/auth/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
+
         const { name, email, birthdate } = res.data;
+
         setForm({
           name: name || '',
           email: email || '',
-          birthdate: birthdate?.substring(0, 10) || ''
+          birthdate: birthdate ? birthdate.substring(0, 10) : ''
         });
       } catch (err) {
         console.error('Error al cargar el perfil:', err.response?.data || err.message);
+        setError('No se pudo cargar el perfil.');
       }
     };
 
@@ -49,7 +51,7 @@ const EditProfile = () => {
     setError('');
 
     try {
-      await updateUserProfile(form, token); // este sigue usando api.js
+      await updateUserProfile(form, token);
       setMessage('✅ ¡Perfil actualizado con éxito!');
     } catch (err) {
       console.error('❌ Error al actualizar:', err.response?.data || err.message);
@@ -66,23 +68,42 @@ const EditProfile = () => {
   return (
     <div className="edit-profile">
       <h2>Editar Perfil</h2>
+
       <form onSubmit={handleSubmit}>
-        <label>
-          Nombre:
-          <input type="text" name="name" value={form.name} onChange={handleChange} required />
-        </label>
-        <label>
-          Correo electrónico:
-          <input type="email" name="email" value={form.email} onChange={handleChange} required />
-        </label>
-        <label>
-          Fecha de nacimiento:
-          <input type="date" name="birthdate" value={form.birthdate} onChange={handleChange} />
-        </label>
+        <label htmlFor="name">Nombre:</label>
+        <input
+          id="name"
+          type="text"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+
+        <label htmlFor="email">Correo electrónico:</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+
+        <label htmlFor="birthdate">Fecha de nacimiento:</label>
+        <input
+          id="birthdate"
+          type="date"
+          name="birthdate"
+          value={form.birthdate}
+          onChange={handleChange}
+        />
+
         <button type="submit" disabled={loading}>
           {loading ? 'Actualizando...' : 'Actualizar'}
         </button>
       </form>
+
       {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>

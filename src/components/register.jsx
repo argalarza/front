@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { GoogleLogin } from '@react-oauth/google';
 
-
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -27,7 +26,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!captchaValue) {
       setErrorMessage('Por favor completa el CAPTCHA.');
       return;
@@ -48,7 +46,6 @@ const Register = () => {
       }
     } catch (error) {
       setErrorMessage(error.response?.data?.error || 'Hubo un error al registrar al usuario.');
-      console.error('Error en el registro:', error);
     }
   };
 
@@ -81,31 +78,6 @@ const Register = () => {
     }
   };
 
-  const handleFacebookResponse = async (response) => {
-    if (!captchaValue) {
-      setErrorMessage('Completa el CAPTCHA antes de usar Facebook.');
-      return;
-    }
-
-    try {
-      const res = await axios.post('http://18.209.183.216:4001/auth/register/', {
-        oauthToken: response.accessToken,
-        recaptchaToken: captchaValue,
-        provider: 'facebook',
-        role: 'client'
-      });
-
-      if (res.data.message === 'Registro exitoso') {
-        setSuccessMessage('Registro con Facebook exitoso.');
-        setTimeout(() => navigate('/'), 2000);
-      } else {
-        setErrorMessage(res.data.error || 'Error desconocido con Facebook');
-      }
-    } catch (err) {
-      setErrorMessage('Error al registrar con Facebook.');
-    }
-  };
-
   return (
     <div className="register-container">
       <h2>Registrarse</h2>
@@ -114,56 +86,61 @@ const Register = () => {
       {successMessage && <p className="success">{successMessage}</p>}
 
       <form onSubmit={handleSubmit}>
+        <label htmlFor="name">Nombre completo</label>
         <input
           type="text"
+          id="name"
           name="name"
-          placeholder="Nombre completo"
           value={formData.name}
           onChange={handleChange}
           required
         />
 
+        <label htmlFor="email">Correo electrónico</label>
         <input
           type="email"
+          id="email"
           name="email"
-          placeholder="Correo electrónico"
           value={formData.email}
           onChange={handleChange}
           required
         />
 
+        <label htmlFor="password">Contraseña</label>
         <input
           type="password"
+          id="password"
           name="password"
-          placeholder="Contraseña"
           value={formData.password}
           onChange={handleChange}
           required
         />
 
+        <label htmlFor="birthdate">Fecha de nacimiento</label>
         <input
           type="date"
+          id="birthdate"
           name="birthdate"
           value={formData.birthdate}
           onChange={handleChange}
           required
         />
 
-        
-        <label>Género</label>
-        <select name="gender" value={formData.gender} onChange={handleChange} required>
+        <label htmlFor="gender">Género</label>
+        <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required>
           <option value="">Selecciona tu género</option>
           <option value="male">Masculino</option>
           <option value="female">Femenino</option>
           <option value="other">Otro / Prefiero no decirlo</option>
         </select>
 
-        <label>Tipo de usuario</label>
-        <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="client">🛍️ Client</option>
+        <label htmlFor="role">Tipo de usuario</label>
+        <select id="role" name="role" value={formData.role} onChange={handleChange}>
+          <option value="client">🛍️ Cliente</option>
           <option value="seller">🧑‍💼 Vendedor</option>
           <option value="admin">🛠️ Administrador</option>
         </select>
+
         <ReCAPTCHA
           sitekey="6LcT524rAAAAAK2zwawAcN2Ye9yslu-cSYMbFfrL"
           onChange={onCaptchaChange}
@@ -179,8 +156,6 @@ const Register = () => {
           onSuccess={(credentialResponse) => handleGoogleSuccess(credentialResponse.credential)}
           onError={() => setErrorMessage('Error al iniciar sesión con Google')}
         />
-
-        
       </div>
 
       <p>¿Ya tienes cuenta? <a href="/">Inicia sesión</a></p>

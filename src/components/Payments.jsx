@@ -1,6 +1,7 @@
 // src/components/Payments.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import PropTypes from "prop-types";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -230,10 +231,19 @@ function PaymentForm({ orderId, total, onDone }) {
           required
         />
         <CardElement options={{ hidePostalCode: true }} />
-        <PayButton type="submit" disabled={!stripe}>Pagar ${total.toFixed(2)}</PayButton>
+        <PayButton type="submit" disabled={!stripe}>
+          Pagar ${total.toFixed(2)}
+        </PayButton>
       </form>
       {message && <Message>{message}</Message>}
       {error && <Message error>{error}</Message>}
     </PaymentBox>
   );
 }
+
+// ✅ Validación de props
+PaymentForm.propTypes = {
+  orderId: PropTypes.string.isRequired,
+  total: PropTypes.number.isRequired,
+  onDone: PropTypes.func.isRequired,
+};

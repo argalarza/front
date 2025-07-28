@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
@@ -14,22 +15,20 @@ const Login = ({ setLoggedIn }) => {
     e.preventDefault();
 
     if (!captchaValue) {
-      setErrorMessage('Por favor, completa el reCAPTCHA!.');
+      setErrorMessage('Por favor, completa el reCAPTCHA.');
       return;
     }
-
-    const credentials = {
-      email,
-      password,
-      recaptchaToken: captchaValue,
-      provider: 'local',
-    };
 
     try {
       const response = await fetch('http://100.27.116.212:4002/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          email,
+          password,
+          recaptchaToken: captchaValue,
+          provider: 'local',
+        }),
       });
 
       const data = await response.json();
@@ -42,12 +41,9 @@ const Login = ({ setLoggedIn }) => {
         setErrorMessage(data.error || 'Credenciales incorrectas');
       }
     } catch (error) {
+      console.error('Login Error:', error);
       setErrorMessage('Error de conexión. Inténtalo de nuevo.');
     }
-  };
-
-  const onCaptchaChange = (value) => {
-    setCaptchaValue(value);
   };
 
   const handleGoogleLoginSuccess = async (credentialResponse) => {
@@ -78,7 +74,8 @@ const Login = ({ setLoggedIn }) => {
       } else {
         setErrorMessage(data.error || 'Login con Google falló');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Google Login Error:', error);
       setErrorMessage('Error al conectar con el servidor');
     }
   };
@@ -113,24 +110,33 @@ const Login = ({ setLoggedIn }) => {
 
           <ReCAPTCHA
             sitekey="6LcT524rAAAAAK2zwawAcN2Ye9yslu-cSYMbFfrL"
-            onChange={onCaptchaChange}
+            onChange={setCaptchaValue}
           />
 
           <button type="submit">Login</button>
         </form>
-         <p style={{ marginTop: '10px' }}>
-  ¿Olvidaste tu contraseña?{' '}
-  <a href="/request-password-reset">Recupérala aquí</a>
-</p>
+
+        <p style={{ marginTop: '10px' }}>
+          ¿Olvidaste tu contraseña?{' '}
+          <a href="/request-password-reset">Recupérala aquí</a>
+        </p>
 
         <div style={{ marginTop: '20px' }}>
-          <GoogleLogin onSuccess={handleGoogleLoginSuccess} onError={() => setErrorMessage('Error con Google')} />
+          <GoogleLogin
+            onSuccess={handleGoogleLoginSuccess}
+            onError={() => setErrorMessage('Error con Google')}
+          />
         </div>
 
         {errorMessage && <p className="error">{errorMessage}</p>}
       </div>
     </GoogleOAuthProvider>
   );
+};
+
+// ✅ Validación de props obligatorias
+Login.propTypes = {
+  setLoggedIn: PropTypes.func.isRequired,
 };
 
 export default Login;
